@@ -79,6 +79,7 @@
   }
   .card:nth-child(2) { animation-delay: .08s; border-left-color: #e67e22; }
   .card:nth-child(3) { animation-delay: .16s; border-left-color: #27ae60; }
+  .card:nth-child(4) { animation-delay: .24s; border-left-color: #8e44ad; }
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -155,7 +156,7 @@
 <div class="container">
   <header>
     <h1>📋 执业医师技能考试</h1>
-    <p>体格检查 + 基本操作 · 随机三题</p>
+    <p>体格检查 + 基本操作 · 随机四题</p>
   </header>
 
   <div class="stats">
@@ -168,7 +169,7 @@
   <div class="cards" id="cards">
     <div class="empty-state">
       <div class="icon">🩺</div>
-      <p>点击「抽题」按钮，随机抽取三道题</p>
+      <p>点击「抽题」按钮，随机抽取四道题</p>
       <p style="font-size:13px;margin-top:6px;">覆盖全部体格检查 &amp; 基本操作项目</p>
     </div>
   </div>
@@ -321,14 +322,14 @@ function shuffle(arr) {
   return arr;
 }
 
-function pickThree() {
+function pickFour() {
   const copy = [...QUESTIONS];
   shuffle(copy);
-  return copy.slice(0, 3);
+  return copy.slice(0, 4);
 }
 
-function renderCards(three) {
-  cardsEl.innerHTML = three.map((q, i) => `
+function renderCards(four) {
+  cardsEl.innerHTML = four.map((q, i) => `
     <div class="card">
       <div class="num">第 ${q.id} 题</div>
       <div class="category">${q.category}</div>
@@ -344,9 +345,9 @@ function draw() {
 
   // 短暂动画延迟
   setTimeout(() => {
-    const three = pickThree();
-    renderCards(three);
-    history.push({ time: new Date(), items: three });
+    const four = pickFour();
+    renderCards(four);
+    history.push({ time: new Date(), items: four });
     drawCountEl.textContent = history.length;
     isDrawing = false;
     drawBtn.disabled = false;
