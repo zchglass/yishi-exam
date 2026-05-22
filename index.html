@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执业医师技能考试 · 随机抽题</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f0 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  .container {
+    max-width: 720px;
+    width: 100%;
+  }
+  header {
+    text-align: center;
+    padding: 32px 0 20px;
+  }
+  header h1 {
+    font-size: 26px;
+    color: #1a2a3a;
+    letter-spacing: 2px;
+    font-weight: 700;
+  }
+  header p {
+    color: #6b7a8a;
+    font-size: 14px;
+    margin-top: 6px;
+  }
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: #6b7a8a;
+  }
+  .stats span { background: #fff; padding: 4px 14px; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .draw-btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #2b7be4 0%, #1a5fc7 100%);
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    letter-spacing: 4px;
+    box-shadow: 0 6px 20px rgba(43,123,228,.35);
+    transition: transform .15s, box-shadow .15s;
+    margin-bottom: 24px;
+  }
+  .draw-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(43,123,228,.4); }
+  .draw-btn:active { transform: scale(.97); }
+  .draw-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 240px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    animation: fadeUp .35s ease both;
+    border-left: 4px solid #2b7be4;
+  }
+  .card:nth-child(2) { animation-delay: .08s; border-left-color: #e67e22; }
+  .card:nth-child(3) { animation-delay: .16s; border-left-color: #27ae60; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card .num {
+    font-size: 12px;
+    color: #8a9aa8;
+    margin-bottom: 6px;
+  }
+  .card .category {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2b7be4;
+    background: #eef4fd;
+    padding: 2px 10px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .card .title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a2a3a;
+    line-height: 1.5;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #8a9aa8;
+  }
+  .empty-state .icon { font-size: 52px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; }
+
+  .history-toggle {
+    background: none;
+    border: none;
+    color: #8a9aa8;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 20px;
+    padding: 8px;
+  }
+  .history-toggle:hover { color: #2b7be4; }
+  .history {
+    display: none;
+    margin-top: 8px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  }
+  .history.show { display: block; }
+  .history .h-item {
+    font-size: 13px;
+    color: #3a4a5a;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f2f5;
+  }
+  .history .h-item:last-child { border-bottom: none; }
+  .history .h-time { color: #8a9aa8; font-size: 11px; margin-right: 8px; }
+
+  footer {
+    margin-top: 32px;
+    font-size: 12px;
+    color: #aab4be;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📋 执业医师技能考试</h1>
+    <p>体格检查 + 基本操作 · 随机三题</p>
+  </header>
+
+  <div class="stats">
+    <span>📚 共 <strong id="totalCount">119</strong> 题</span>
+    <span>🔄 已抽 <strong id="drawCount">0</strong> 次</span>
+  </div>
+
+  <button class="draw-btn" id="drawBtn">🎯 抽 题</button>
+
+  <div class="cards" id="cards">
+    <div class="empty-state">
+      <div class="icon">🩺</div>
+      <p>点击「抽题」按钮，随机抽取三道题</p>
+      <p style="font-size:13px;margin-top:6px;">覆盖全部体格检查 &amp; 基本操作项目</p>
+    </div>
+  </div>
+
+  <button class="history-toggle" id="historyToggle">📜 查看抽题记录</button>
+  <div class="history" id="history"></div>
+
+  <footer>大苗老师模拟考场 · 技能考试练习工具</footer>
+</div>
+
+<script>
+// ======= 所有题目数据（119题） =======
+const QUESTIONS = [
+  {id:1,  category:"一般检查", title:"体温测量（腋测法）"},
+  {id:2,  category:"一般检查", title:"脉搏测量"},
+  {id:3,  category:"一般检查", title:"呼吸测量"},
+  {id:4,  category:"一般检查", title:"血压测量"},
+  {id:5,  category:"一般检查", title:"身高测量"},
+  {id:6,  category:"一般检查", title:"体重测量"},
+  {id:7,  category:"一般检查", title:"头围测量"},
+  {id:8,  category:"一般检查", title:"皮肤检查"},
+  {id:9,  category:"一般检查", title:"颌下淋巴结检查"},
+  {id:10, category:"一般检查", title:"颈部淋巴结检查"},
+  {id:11, category:"一般检查", title:"锁骨上淋巴结检查"},
+  {id:12, category:"一般检查", title:"腋窝淋巴结检查"},
+  {id:13, category:"一般检查", title:"滑车上淋巴结检查"},
+  {id:14, category:"一般检查", title:"腹股沟淋巴结检查"},
+  {id:15, category:"头颈部", title:"眼球运动检查"},
+  {id:16, category:"头颈部", title:"眼部检查（包括眼睑、巩膜、结膜、角膜）"},
+  {id:17, category:"头颈部", title:"瞳孔检查：大小与形状、对光反射（直、间接）、集合反射"},
+  {id:18, category:"头颈部", title:"咽部、扁桃体检查"},
+  {id:19, category:"头颈部", title:"甲状腺视诊"},
+  {id:20, category:"头颈部", title:"甲状腺前面触诊"},
+  {id:21, category:"头颈部", title:"甲状腺后面触诊"},
+  {id:22, category:"头颈部", title:"气管检查"},
+  {id:23, category:"头颈部", title:"血管检查"},
+  {id:24, category:"胸部", title:"胸部的体表标志（骨骼标志、垂直线标志、自然陷窝、肺和胸膜的界限）"},
+  {id:25, category:"胸部", title:"胸壁视诊"},
+  {id:26, category:"胸部", title:"胸廓视诊"},
+  {id:27, category:"胸部", title:"呼吸运动、呼吸频率、呼吸节律"},
+  {id:28, category:"胸部", title:"胸部触诊：胸廓扩张度"},
+  {id:29, category:"胸部", title:"胸部触诊：语音震颤"},
+  {id:30, category:"胸部", title:"胸部触诊：胸膜摩擦感"},
+  {id:31, category:"胸部", title:"胸部叩诊：叩诊方法"},
+  {id:32, category:"胸部", title:"肺上界叩诊"},
+  {id:33, category:"胸部", title:"肺下界叩诊"},
+  {id:34, category:"胸部", title:"肺下界移动度"},
+  {id:35, category:"胸部", title:"胸部听诊：肺部听诊、正常呼吸音、异常呼吸音"},
+  {id:36, category:"胸部", title:"语音共振检查"},
+  {id:37, category:"胸部", title:"胸膜摩擦音"},
+  {id:38, category:"胸部", title:"乳房视诊"},
+  {id:39, category:"胸部", title:"乳房触诊"},
+  {id:40, category:"心脏", title:"心脏视诊：心前区隆起与凹陷、心尖搏动、心前区异常搏动"},
+  {id:41, category:"心脏", title:"心脏触诊：心尖搏动"},
+  {id:42, category:"心脏", title:"心前区异常搏动、震颤"},
+  {id:43, category:"心脏", title:"心包摩擦感"},
+  {id:44, category:"心脏", title:"心脏叩诊：心界叩诊及左锁骨中线距前正中线距离的测量"},
+  {id:45, category:"心脏", title:"心脏听诊：心脏瓣膜听诊区、听诊顺序"},
+  {id:46, category:"心脏", title:"水冲脉检查"},
+  {id:47, category:"心脏", title:"枪击音检查"},
+  {id:48, category:"心脏", title:"毛细血管搏动征"},
+  {id:49, category:"心脏", title:"杜氏双重杂音"},
+  {id:50, category:"腹部", title:"腹部的体表标志"},
+  {id:51, category:"腹部", title:"腹部分区"},
+  {id:52, category:"腹部", title:"腹部视诊：腹部外形、腹围、呼吸运动、腹壁静脉、胃肠型和蠕动波"},
+  {id:53, category:"腹部", title:"腹围测量"},
+  {id:54, category:"腹部", title:"腹壁静脉曲张检查"},
+  {id:55, category:"腹部", title:"腹部触诊：腹壁紧张度、压痛及反跳痛"},
+  {id:56, category:"腹部", title:"肝触诊（单手）"},
+  {id:57, category:"腹部", title:"肝触诊（双手）"},
+  {id:58, category:"腹部", title:"脾触诊（仰卧位）"},
+  {id:59, category:"腹部", title:"脾触诊（侧卧位）"},
+  {id:60, category:"腹部", title:"胆囊触诊"},
+  {id:61, category:"腹部", title:"墨菲征（Murphy征）"},
+  {id:62, category:"腹部", title:"腹部包块触诊"},
+  {id:63, category:"腹部", title:"液波震颤"},
+  {id:64, category:"腹部", title:"振水音"},
+  {id:65, category:"腹部", title:"腹部叩诊：腹部叩诊音"},
+  {id:66, category:"腹部", title:"肝浊音界叩诊"},
+  {id:67, category:"腹部", title:"肝上下径的测量"},
+  {id:68, category:"腹部", title:"移动性浊音"},
+  {id:69, category:"腹部", title:"肋脊角叩击痛"},
+  {id:70, category:"腹部", title:"膀胱叩诊"},
+  {id:71, category:"腹部", title:"水坑征"},
+  {id:72, category:"腹部", title:"腹部听诊：肠鸣音"},
+  {id:73, category:"腹部", title:"血管杂音"},
+  {id:74, category:"脊柱四肢", title:"脊柱检查：脊柱弯曲度"},
+  {id:75, category:"脊柱四肢", title:"脊柱检查：脊柱活动度"},
+  {id:76, category:"脊柱四肢", title:"脊柱检查：脊柱压痛与叩击痛"},
+  {id:77, category:"脊柱四肢", title:"手部检查"},
+  {id:78, category:"脊柱四肢", title:"四肢、关节检查"},
+  {id:79, category:"脊柱四肢", title:"小腿膝关节检查"},
+  {id:80, category:"脊柱四肢", title:"侧方加压实验"},
+  {id:81, category:"脊柱四肢", title:"抽屉试验"},
+  {id:82, category:"脊柱四肢", title:"浮髌试验"},
+  {id:83, category:"脊柱四肢", title:"麦氏征（McMurray征）"},
+  {id:84, category:"脊柱四肢", title:"肛门指诊"},
+  {id:85, category:"神经系统", title:"肌力检查"},
+  {id:86, category:"神经系统", title:"肌张力检查"},
+  {id:87, category:"神经系统", title:"深反射：肱二头肌反射"},
+  {id:88, category:"神经系统", title:"膝反射"},
+  {id:89, category:"神经系统", title:"跟腱反射（踝反射）"},
+  {id:90, category:"神经系统", title:"浅反射（腹壁反射）"},
+  {id:91, category:"神经系统", title:"脑膜刺激征：颈强直"},
+  {id:92, category:"神经系统", title:"Kernig征"},
+  {id:93, category:"神经系统", title:"Brudzinski征"},
+  {id:94, category:"神经系统", title:"病理反射（Babinski征）"},
+  {id:95, category:"基本操作", title:"手术区消毒、铺巾"},
+  {id:96, category:"基本操作", title:"外科手消毒"},
+  {id:97, category:"基本操作", title:"穿脱手术衣与戴无菌手套"},
+  {id:98, category:"基本操作", title:"外科手术的基本操作（切开、止血、缝合、结扎）"},
+  {id:99, category:"基本操作", title:"清创术"},
+  {id:100,category:"基本操作", title:"开放性伤口的止血包扎"},
+  {id:101,category:"基本操作", title:"脓肿切开术"},
+  {id:102,category:"基本操作", title:"换药与拆线"},
+  {id:103,category:"基本操作", title:"吸氧术"},
+  {id:104,category:"基本操作", title:"吸痰术"},
+  {id:105,category:"基本操作", title:"胃管置入术"},
+  {id:106,category:"基本操作", title:"三腔二囊管止血法"},
+  {id:107,category:"基本操作", title:"导尿术"},
+  {id:108,category:"基本操作", title:"动脉穿刺术"},
+  {id:109,category:"基本操作", title:"静脉穿刺术"},
+  {id:110,category:"基本操作", title:"胸腔穿刺术"},
+  {id:111,category:"基本操作", title:"腹腔穿刺术"},
+  {id:112,category:"基本操作", title:"腰椎穿刺术"},
+  {id:113,category:"基本操作", title:"骨髓穿刺术"},
+  {id:114,category:"基本操作", title:"脊柱损伤的搬运"},
+  {id:115,category:"基本操作", title:"四肢骨折现场急救外固定技术"},
+  {id:116,category:"基本操作", title:"心肺复苏"},
+  {id:117,category:"基本操作", title:"电除颤"},
+  {id:118,category:"基本操作", title:"简易呼吸器的使用"},
+  {id:119,category:"基本操作", title:"穿、脱隔离衣"},
+];
+
+// ======= 状态 =======
+let history = [];
+let isDrawing = false;
+
+const cardsEl = document.getElementById('cards');
+const drawBtn = document.getElementById('drawBtn');
+const drawCountEl = document.getElementById('drawCount');
+const historyEl = document.getElementById('history');
+const historyToggle = document.getElementById('historyToggle');
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function pickThree() {
+  const copy = [...QUESTIONS];
+  shuffle(copy);
+  return copy.slice(0, 3);
+}
+
+function renderCards(three) {
+  cardsEl.innerHTML = three.map((q, i) => `
+    <div class="card">
+      <div class="num">第 ${q.id} 题</div>
+      <div class="category">${q.category}</div>
+      <div class="title">${q.title}</div>
+    </div>
+  `).join('');
+}
+
+function draw() {
+  if (isDrawing) return;
+  isDrawing = true;
+  drawBtn.disabled = true;
+
+  // 短暂动画延迟
+  setTimeout(() => {
+    const three = pickThree();
+    renderCards(three);
+    history.push({ time: new Date(), items: three });
+    drawCountEl.textContent = history.length;
+    isDrawing = false;
+    drawBtn.disabled = false;
+  }, 150);
+}
+
+function renderHistory() {
+  if (history.length === 0) {
+    historyEl.innerHTML = '<div style="color:#8a9aa8;text-align:center;padding:12px;">暂无记录</div>';
+    return;
+  }
+  // 倒序显示（最新的在上面）
+  const reversed = [...history].reverse();
+  historyEl.innerHTML = reversed.map((h, i) => {
+    const timeStr = h.time.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    const items = h.items.map(q => `【${q.category}】${q.title}`).join('<br>');
+    return `<div class="h-item"><span class="h-time">${timeStr}</span>#${history.length - i}<br>${items}</div>`;
+  }).join('');
+}
+
+drawBtn.addEventListener('click', draw);
+
+historyToggle.addEventListener('click', () => {
+  const show = historyEl.classList.toggle('show');
+  historyToggle.textContent = show ? '🙈 收起记录' : '📜 查看抽题记录';
+  if (show) renderHistory();
+});
+
+// 首次进入自动抽一题
+draw();
+</script>
+</body>
+</html>
